@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>McDonald's Smooth CRP Race</title>
+    <title>McDonald's Optimized Race</title>
     <style>
         :root {
             --mcd-red: #DB0007;
@@ -17,82 +17,67 @@
             color: white;
             font-family: 'Arial Black', sans-serif;
             overflow: hidden;
-            /* Critical for smooth mobile scrolling/movement */
-            -webkit-font-smoothing: antialiased;
             touch-action: none;
         }
 
-        .container { 
-            display: flex; 
-            flex-direction: column; 
-            height: 100dvh;
-            width: 100vw;
-        }
+        .container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; }
 
         .header {
             background: var(--mcd-red);
-            padding: 5px;
+            padding: 8px;
             text-align: center;
             border-bottom: 3px solid var(--mcd-gold);
             flex-shrink: 0;
         }
-        .header h1 { font-size: 0.9rem; margin: 0; letter-spacing: 1px; }
+        .header h1 { font-size: 1rem; margin: 0; letter-spacing: 1px; }
 
         .track-area {
             flex: 1;
             position: relative;
             background: #1a1a1a;
-            background-image: 
-                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 50px 50px;
             margin: 10px;
             border: 2px solid #333;
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
-            /* Hardware acceleration hint */
+            /* Force GPU acceleration for the whole track */
             transform: translateZ(0);
         }
 
         .finish-line {
             position: absolute;
             right: 60px; top: 0; bottom: 0;
-            width: 20px;
+            width: 25px;
             background: repeating-linear-gradient(0deg, #fff 0 10px, #000 10px 20px);
-            z-index: 1; opacity: 0.3;
+            z-index: 1; opacity: 0.2;
         }
 
         .racer {
             position: absolute;
-            top: 0; left: 0;
+            left: 0; top: 0;
             display: flex;
             align-items: center;
             z-index: 5;
-            /* This is the secret to smoothness: */
+            /* GPU Optimization */
             will-change: transform;
-            transition: transform 0.1s linear; 
+            transition: transform 0.15s ease-out;
         }
 
-        .car { font-size: 1.3rem; filter: drop-shadow(0 2px 2px black); }
+        .car { font-size: 1.5rem; filter: drop-shadow(0 2px 2px black); }
         .racer-name { 
-            font-size: 0.45rem; 
-            background: rgba(0,0,0,0.7); 
-            padding: 1px 3px; 
-            border-radius: 2px; 
-            margin-left: 4px; 
+            font-size: 0.5rem; 
+            background: rgba(0,0,0,0.8); 
+            padding: 2px 5px; 
+            border-radius: 3px; 
+            margin-left: 5px; 
             white-space: nowrap; 
+            border: 1px solid #444;
         }
 
-        .controls { 
-            padding: 10px 10px 20px 10px;
-            text-align: center;
-            flex-shrink: 0;
-        }
+        .controls { padding: 15px; text-align: center; flex-shrink: 0; }
         
         .btn {
-            padding: 12px 45px; 
-            font-size: 1rem; 
-            cursor: pointer; 
+            padding: 12px 50px; 
+            font-size: 1.1rem; 
             border-radius: 50px;
             border: 2px solid var(--mcd-gold); 
             font-weight: bold; 
@@ -102,69 +87,41 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* Rotation Lock Prompt */
         #rotateWarning {
-            position: fixed; inset: 0;
-            background: #111;
-            z-index: 9999;
-            display: none;
-            flex-direction: column;
-            align-items: center; justify-content: center;
-            text-align: center;
+            position: fixed; inset: 0; background: #111; z-index: 9999;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        @media screen and (orientation: portrait) {
-            #rotateWarning { display: flex; }
-        }
+        @media screen and (orientation: portrait) { #rotateWarning { display: flex; } }
 
-        /* Modals */
         .full-modal {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.96);
-            display: none; flex-direction: column;
-            align-items: center; justify-content: center;
-            z-index: 1000;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.97);
+            display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 1000;
         }
 
-        .winner-img {
-            width: 110px; height: 110px; border-radius: 50%;
-            border: 4px solid var(--mcd-gold); object-fit: cover;
-        }
+        .winner-img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--mcd-gold); object-fit: cover; }
+        
+        .summary-grid { display: flex; justify-content: center; gap: 12px; margin: 20px 0; }
+        .summary-card { background: #000; padding: 10px; border-radius: 10px; border: 1px solid var(--mcd-gold); text-align: center; width: 95px; }
+        .summary-card img { width: 45px; height: 45px; border-radius: 50%; }
 
-        .summary-grid {
-            display: flex; justify-content: center; gap: 10px; margin: 15px 0;
-        }
-        .summary-card {
-            background: #111; padding: 8px; border-radius: 8px;
-            border: 1px solid var(--mcd-gold); text-align: center; width: 85px;
-        }
-        .summary-card img { width: 40px; height: 40px; border-radius: 50%; }
-
-        #standoutArea {
-            position: fixed; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000; display: none; width: 280px;
-        }
-        .slam-in {
-            background: black; border: 3px solid white; padding: 20px;
-            border-radius: 15px; text-align: center;
-            animation: slam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
+        #standoutArea { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; display: none; width: 300px; }
+        .slam-in { background: #000; border: 4px solid white; padding: 25px; border-radius: 20px; text-align: center; animation: slam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes slam { 0% { transform: scale(3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div id="rotateWarning">
-    <div style="font-size: 2rem;">🏎️</div>
-    <h3 style="color:var(--mcd-gold)">ROTATE FOR WIDE TRACK</h3>
-    <p style="font-size: 0.8rem;">Turn your phone sideways to start the race.</p>
+    <div style="font-size: 3rem;">🏎️</div>
+    <h2 style="color:var(--mcd-gold)">ROTATE SIDEWAYS</h2>
+    <p>Please turn your phone for the best experience.</p>
 </div>
 
 <div class="container" id="mainUI">
     <header class="header"><h1>🍔 APRIL CRP RACE 🍟</h1></header>
     <div class="track-area" id="track">
+        <div style="position:absolute; top:5px; width:100%; text-align:center; color:var(--mcd-gold); font-size:0.7rem; opacity:0.6;" id="categoryDisplay">READY?</div>
         <div class="finish-line"></div>
     </div>
     <div class="controls">
@@ -172,36 +129,36 @@
     </div>
 </div>
 
-<!-- Winner Popups -->
 <div class="full-modal" id="winnerModal">
-    <h3 id="awardTitle" style="color:var(--mcd-gold); margin:0; font-size: 0.9rem;"></h3>
-    <div id="winnerPhotoArea" style="margin: 10px;"></div>
-    <h1 id="winnerName" style="margin: 0 0 10px 0; font-size: 1.5rem;"></h1>
-    <button class="btn" onclick="closeWinnerModal()" style="font-size: 0.8rem;">NEXT</button>
+    <h3 id="awardTitle" style="color:var(--mcd-gold); margin:0; font-size: 1rem;"></h3>
+    <div id="winnerPhotoArea" style="margin: 15px;"></div>
+    <h1 id="winnerName" style="margin: 0 0 15px 0; font-size: 1.8rem;"></h1>
+    <button class="btn" onclick="closeWinnerModal()">NEXT</button>
 </div>
 
 <div class="full-modal" id="finalePage">
-    <h2 id="finaleTitle" style="color:var(--mcd-gold); font-size: 1.1rem;">STATION CHAMPIONS</h2>
+    <h2 id="finaleTitle" style="color:var(--mcd-gold);">STATION CHAMPIONS</h2>
     <div class="summary-grid" id="summaryGrid"></div>
     <button class="btn" id="revealBtn" onclick="intenseReveal()">REVEAL STANDOUT ⭐</button>
     
     <div id="standoutArea">
         <div class="slam-in">
-            <h2 style="color:var(--mcd-gold); font-size: 0.9rem; margin:0;">🏆 THE STANDOUT 🏆</h2>
-            <img id="standoutPhoto" src="" class="winner-img" style="border-color: white; margin: 10px;">
-            <h1 id="standoutName" style="font-size: 1.3rem; color: white; margin-bottom:15px;"></h1>
-            <button class="btn" style="font-size: 0.7rem; background: #222;" onclick="location.reload()">RESTART</button>
+            <h2 style="color:var(--mcd-gold); margin:0;">🏆 THE STANDOUT 🏆</h2>
+            <img id="standoutPhoto" src="" class="winner-img" style="border-color: white; margin: 15px;">
+            <h1 id="standoutName" style="font-size: 1.5rem; color: white; margin-bottom:20px;"></h1>
+            <button class="btn" style="background:#222; font-size:0.8rem;" onclick="location.reload()">RESTART</button>
         </div>
     </div>
 </div>
 
 <script>
-    const names = ["MELCHOR", "FENNY ROGER", "JOSHUA", "RAVEN", "JENNY", "ARISTOTLE ACE", "RONALYN", "KAROL JOSEF", "EMAN", "ANGELICA", "JOHN ALBERT", "JAKE LAWRENCE", "DEXTER", "DARLENE ANGEL", "MEILA JILL", "MARY FAITH", "LEIGH ANGELO", "KLARENZE JAKE", "ARVIE", "CLARENCE", "RHEALYN", "JHOAN QUINN", "FRANCHESKA DENISE", "JM", "LESTER", "EDRITCH JOHN", "KAI RAFAIEL", "ALEXANDRA MARIE", "LAMBERT", "JHON DAVE", "RYAN JOHN", "SHAYNE CRYSTALLINE", "RUSTOM JOHN", "ERICKSON", "ROMEO JR", "TRYCYL", "JOMARI", "AARON", "JOHN IRVIN", "JOHN MARK", "JOHN ANDREI", "CARL JAY", "JANINE", "CHRISTINE JOY", "KIMBERLY MAE", "NICOLE RICH", "JULIAN", "AUSWALD YSRAEL", "CARL RAFAEL", "JOHN MATTHEW", "MARY JANE", "LUCIA MAE", "RENZ", "ARFEL", "LAWRENCE JOED", "GLAIZA MAE", "NASH ADRIAN", "MELANIE", "MARK JEFFREY", "IRISH JOY", "JENNIE", "KRIZZANEIL GAILE"];
+    // Reduced to 30 names for absolute smoothness on mobile
+    const names = ["MELCHOR", "FENNY ROGER", "JOSHUA", "RAVEN", "JENNY", "ACE", "RONALYN", "KAROL", "EMAN", "ANGELICA", "ALBERT", "JAKE", "DEXTER", "DARLENE", "MEILA", "MARY", "LEIGH", "KLARENZ", "ARVIE", "CLARENCE", "RHEALYN", "JHOAN", "DENISE", "JM", "LESTER", "EDRITCH", "KAI", "ALEX", "LAMBERT", "DAVE"];
     
     const awards = [
         { title: "RISING STAR", winner: "KEAN EGARTA", photo: "KEAN.jpg" },
         { title: "SERVICE SUNSHINE", winner: "RAVEN APOSTOL", photo: "RAVS.jpg" },
-        { title: "QUALITY EXPERT", winner: "ARISTOTLE LAXA", photo: "ARID.jpg" },
+        { title: "QUALITY EXPERT", winner: "ARISTOTLE ACE", photo: "ARID.jpg" },
         { title: "CHICKEN MCDO MASTER", winner: "KLARENZ AUSTIN", photo: "KLA.jpg" }
     ];
     const standout = { name: "ARISTOTLE ACE LAXA", photo: "ARID.jpg" };
@@ -209,84 +166,78 @@
     const track = document.getElementById('track');
     const racerObjects = [];
 
-    // Initialize racers with transform3d for GPU acceleration
+    // Setup racers
     names.forEach((name, i) => {
         const racerDiv = document.createElement('div');
         racerDiv.className = 'racer';
-        const topPos = (5 + (i * (90 / names.length)));
-        racerDiv.style.top = topPos + "%";
-        // Start position using transform
+        racerDiv.style.top = (5 + (i * (90 / names.length))) + "%";
         racerDiv.style.transform = `translate3d(10px, 0, 0)`;
         racerDiv.innerHTML = `<div class="car">🏎️</div><div class="racer-name">${name}</div>`;
         track.appendChild(racerDiv);
-        racerObjects.push({ el: racerDiv, winnerMatch: name });
+        racerObjects.push({ el: racerDiv, name: name });
     });
 
-    let currentAwardIdx = 0;
+    let currentIdx = 0;
     const winnerLog = [];
 
     function startSuperRace() {
         document.getElementById('startBtn').disabled = true;
-        const award = awards[currentAwardIdx];
-        const winnerName = award.winner.split(' ')[0].toUpperCase();
+        const award = awards[currentIdx];
+        document.getElementById('categoryDisplay').textContent = award.title;
         
         let startTime = Date.now();
-        const duration = 12000; // 12 seconds for a snappier mobile feel
+        const duration = 10000; // 10 seconds is the sweet spot for mobile
 
-        const raceInterval = setInterval(() => {
+        const raceTimer = setInterval(() => {
             let elapsed = Date.now() - startTime;
             let progress = elapsed / duration;
-            
-            const trackWidth = track.clientWidth;
+            let width = track.clientWidth;
 
             racerObjects.forEach((r) => {
-                let baseMove = progress * (trackWidth * 0.7);
-                let randomBoost = Math.random() * 15;
-                
-                // If it's the winner, give them a late boost
-                if (progress > 0.8 && r.winnerMatch.includes(winnerName)) {
-                    baseMove += (progress * 50);
+                let x = progress * (width * 0.65);
+                let jitter = Math.random() * 20;
+
+                // Winner Logic
+                if (progress > 0.8 && award.winner.toUpperCase().includes(r.name)) {
+                    x += (progress * 80);
                 }
 
-                // Apply movement via Translate3D (The "Smooth" part)
-                r.el.style.transform = `translate3d(${baseMove + randomBoost}px, 0, 0)`;
+                r.el.style.transform = `translate3d(${x + jitter}px, 0, 0)`;
             });
 
             if (elapsed >= duration) {
-                clearInterval(raceInterval);
-                setTimeout(() => showWinner(award), 500);
+                clearInterval(raceTimer);
+                setTimeout(() => {
+                    winnerLog.push(award);
+                    document.getElementById('awardTitle').textContent = award.title;
+                    document.getElementById('winnerName').textContent = award.winner;
+                    document.getElementById('winnerPhotoArea').innerHTML = `<img src="${award.photo}" class="winner-img">`;
+                    document.getElementById('winnerModal').style.display = 'flex';
+                }, 400);
             }
-        }, 50); // High frequency update for smoothness
-    }
-
-    function showWinner(award) {
-        winnerLog.push(award);
-        document.getElementById('awardTitle').textContent = award.title;
-        document.getElementById('winnerName').textContent = award.winner;
-        document.getElementById('winnerPhotoArea').innerHTML = `<img src="${award.photo}" class="winner-img">`;
-        document.getElementById('winnerModal').style.display = 'flex';
+        }, 60); // 60ms interval is easier on mobile processors
     }
 
     function closeWinnerModal() {
         document.getElementById('winnerModal').style.display = 'none';
-        currentAwardIdx++;
-        if (currentAwardIdx < awards.length) {
+        currentIdx++;
+        if (currentIdx < awards.length) {
             racerObjects.forEach(r => r.el.style.transform = `translate3d(10px, 0, 0)`);
             document.getElementById('startBtn').disabled = false;
         } else {
-            showFinale();
+            showFinalHall();
         }
     }
 
-    function showFinale() {
+    function showFinalHall() {
         document.getElementById('mainUI').style.display = 'none';
         const grid = document.getElementById('summaryGrid');
         grid.innerHTML = "";
         winnerLog.forEach(w => {
             grid.innerHTML += `<div class="summary-card">
-                <div style="font-size:0.35rem; color:var(--mcd-gold); height:15px;">${w.title}</div>
+                <div style="font-size:0.4rem; color:var(--mcd-gold); height:15px;">${w.title}</div>
                 <img src="${w.photo}">
-                <div style="font-size:0.45rem; margin-top:3px;">${w.winner.split(' ')[0]}</div>
+                <div style="font-size:0.5rem; margin-top:5px;">${w.winner.split(' ')[0]}</div>
             </div>`;
         });
         document.getElementById('finalePage').style.display = 'flex';
@@ -297,10 +248,10 @@
         setTimeout(() => {
             document.getElementById('summaryGrid').style.opacity = "0.1";
             document.getElementById('finaleTitle').style.opacity = "0.1";
-            document.getElementById('standoutName').textContent = standout.name;
             document.getElementById('standoutPhoto').src = standout.photo;
+            document.getElementById('standoutName').textContent = standout.name;
             document.getElementById('standoutArea').style.display = 'block';
-        }, 1500);
+        }, 1000);
     }
 </script>
 </body>
