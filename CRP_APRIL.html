@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>McDonald's CRP Race</title>
     <style>
         :root {
@@ -10,37 +10,37 @@
             --mcd-gold: #FFC72C;
         }
 
-        /* Essential for mobile: Use 100dvh for dynamic height */
+        /* Allow scrolling on body if content overflows on small iOS screens */
         body, html {
             margin: 0; padding: 0;
-            width: 100%; height: 100dvh; 
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Arial Black', sans-serif;
+            width: 100%;
+            min-height: 100%;
             background: #111;
             color: white;
-            overscroll-behavior: none;
+            font-family: 'Arial Black', sans-serif;
+            /* Smooth scrolling for iOS */
+            -webkit-overflow-scrolling: touch;
         }
 
         .container { 
             display: flex; 
             flex-direction: column; 
-            height: 100%; 
+            min-height: 100vh; /* Fallback */
+            min-height: 100dvh; /* Dynamic height for mobile browsers */
             width: 100%;
         }
 
         .header {
             background: var(--mcd-red);
-            padding: 8px;
+            padding: 10px;
+            padding-top: env(safe-area-inset-top); /* iOS Notch Support */
             text-align: center;
             border-bottom: 4px solid var(--mcd-gold);
             flex-shrink: 0;
         }
 
-        .header h1 { font-size: 1.1rem; margin: 0; }
-
         .track-area {
-            flex: 1; /* Takes up remaining space */
+            flex: 1;
             position: relative;
             background: #222;
             background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
@@ -48,6 +48,7 @@
             margin: 10px;
             border: 4px solid #444;
             border-radius: 15px;
+            min-height: 300px; /* Ensures track doesn't collapse */
             overflow: hidden;
         }
 
@@ -69,16 +70,15 @@
         .car { font-size: 1.2rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
         .racer-name { font-size: 0.5rem; background: rgba(0,0,0,0.8); color: #fff; padding: 1px 4px; border-radius: 3px; margin-left: 3px; white-space: nowrap; }
 
-        /* Important for mobile visibility */
         .controls { 
-            padding: 15px 15px 30px 15px; 
+            padding: 20px;
+            padding-bottom: calc(30px + env(safe-area-inset-bottom)); /* Extra space for iOS Home Bar */
             text-align: center;
             flex-shrink: 0;
-            background: #111;
         }
         
         .btn {
-            padding: 12px 35px; 
+            padding: 15px 40px; 
             font-size: 1.1rem; 
             cursor: pointer; 
             border-radius: 50px;
@@ -88,34 +88,40 @@
             color: white;
             touch-action: manipulation;
             box-shadow: 0 4px 0px #800000;
+            display: inline-block;
         }
 
-        .btn:active { transform: translateY(2px); box-shadow: none; }
-
         .full-modal {
-            position: fixed; inset: 0;
+            position: fixed; 
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.98);
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 1000; text-align: center; padding: 15px;
+            display: none; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            z-index: 1000; 
+            text-align: center; 
+            padding: 20px;
+            overflow-y: auto; /* Allows scrolling inside modals if needed */
         }
 
         .winner-img {
-            width: 150px; height: 150px; border-radius: 50%;
+            width: 140px; height: 140px; border-radius: 50%;
             border: 5px solid var(--mcd-gold); object-fit: cover; margin: 10px;
         }
 
         .summary-grid {
             display: grid; grid-template-columns: repeat(2, 1fr);
-            gap: 8px; width: 100%; max-width: 500px; margin-top: 15px;
+            gap: 10px; width: 100%; max-width: 500px; margin: 15px 0;
         }
 
         .summary-card {
-            background: #1a1a1a; padding: 8px; border-radius: 12px;
+            background: #1a1a1a; padding: 10px; border-radius: 12px;
             border: 2px solid var(--mcd-gold);
         }
 
         #standoutArea {
-            position: absolute;
+            position: fixed; /* Keep it centered regardless of scroll */
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 85%;
@@ -125,22 +131,20 @@
         }
 
         .slam-in { 
-            background: #000; border: 3px solid white; border-radius: 20px; 
-            padding: 15px; box-shadow: 0 0 40px rgba(255,255,255,0.4); 
+            background: #000; border: 4px solid white; border-radius: 20px; 
+            padding: 20px; box-shadow: 0 0 50px rgba(255,255,255,0.4); 
             animation: slam 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         @keyframes slam { 0% { transform: scale(5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .shake { animation: shake 0.1s infinite; }
-        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } 100% { transform: translate(1px, -1px); } }
+        @keyframes shake { 0% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, -1px); } }
         .pulse-bg { animation: pulseRed 0.3s infinite; }
         @keyframes pulseRed { 0%, 100% { background-color: #111; } 50% { background-color: #300; } }
 
         @media (max-width: 600px) {
-            .header h1 { font-size: 0.9rem; }
-            #winnerName { font-size: 1.8rem !important; }
-            #standoutName { font-size: 1.8rem !important; }
-            .winner-img { width: 120px; height: 120px; }
+            .header h1 { font-size: 1rem; }
+            #winnerName, #standoutName { font-size: 1.8rem !important; }
         }
     </style>
 </head>
@@ -148,30 +152,35 @@
 
 <div class="container" id="mainUI">
     <header class="header"><h1>🍟 APRIL CRP RACE 🍔</h1></header>
-    <div style="text-align: center; padding: 5px; font-size: 0.9rem; color: var(--mcd-gold);" id="currentCategory">READY?</div>
+    <div style="text-align: center; padding: 10px; font-size: 0.9rem; color: var(--mcd-gold);" id="currentCategory">READY?</div>
     <div class="track-area" id="track"><div class="finish-line"></div></div>
-    <div class="controls"><button class="btn" id="startBtn" onclick="startSuperRace()">🏁 START RACE</button></div>
+    <div class="controls">
+        <button class="btn" id="startBtn" onclick="startSuperRace()">🏁 START RACE</button>
+    </div>
 </div>
 
+<!-- Standard Winner Modal -->
 <div class="full-modal" id="winnerModal">
     <h2 id="awardTitle" style="color:var(--mcd-gold); font-size: 1rem; margin:0;"></h2>
     <div id="winnerPhotoArea"></div>
-    <h1 id="winnerName" style="font-size: 2rem; margin: 5px 0;"></h1>
+    <h1 id="winnerName" style="font-size: 2rem; margin: 10px 0;"></h1>
     <button class="btn" onclick="closeWinnerModal()">NEXT ➡️</button>
 </div>
 
+<!-- Finale Page -->
 <div class="full-modal" id="finalePage">
-    <h1 id="finaleTitle" style="color:var(--mcd-gold); font-size: 1.4rem; margin:0;">APRIL CHAMPIONS</h1>
+    <h1 id="finaleTitle" style="color:var(--mcd-gold); font-size: 1.5rem; margin-top:20px;">APRIL CHAMPIONS</h1>
     <div class="summary-grid" id="summaryGrid"></div>
-    <div id="revealSection" style="margin-top: 20px;">
+    <div id="revealSection" style="margin-bottom: 40px;">
         <button class="btn" id="revealBtn" onclick="intenseReveal()">REVEAL STANDOUT ⭐</button>
     </div>
+    
     <div id="standoutArea">
         <div class="slam-in">
             <h2 style="color:var(--mcd-gold); font-size: 1rem; margin:0;">🏆 THE STANDOUT 🏆</h2>
             <img id="standoutPhoto" src="" class="winner-img" style="border-color: white;">
-            <h1 id="standoutName" style="font-size: 1.8rem; margin: 0 0 15px 0; color: white;"></h1>
-            <button class="btn" style="background: #333; font-size: 0.8rem;" onclick="location.reload()">RESTART</button>
+            <h1 id="standoutName" style="font-size: 1.8rem; margin: 0 0 20px 0; color: white;"></h1>
+            <button class="btn" style="background: #333; font-size: 0.8rem;" onclick="location.reload()">RESTART EVENT</button>
         </div>
     </div>
 </div>
@@ -194,7 +203,7 @@
     names.forEach((name, i) => {
         const racerDiv = document.createElement('div');
         racerDiv.className = 'racer';
-        racerDiv.style.top = (Math.random() * 88 + 2) + "%";
+        racerDiv.style.top = (Math.random() * 85 + 5) + "%";
         racerDiv.innerHTML = `<div class="car">🏎️</div><div class="racer-name">${name}</div>`;
         track.appendChild(racerDiv);
         racerObjects.push({ el: racerDiv, id: i });
@@ -206,25 +215,24 @@
         document.getElementById('currentCategory').textContent = award.title;
         const winnerID = names.findIndex(n => award.winner.toUpperCase().includes(n)) || 0;
         let startTime = Date.now();
-        const duration = 30000; 
+        const duration = 20000; // Shortened to 20s for better mobile engagement
 
         const raceInterval = setInterval(() => {
             let elapsed = Date.now() - startTime;
             let progress = elapsed / duration;
             racerObjects.forEach((r, i) => {
-                let move = progress * 72;
-                if (Math.random() > 0.98) r.el.style.top = (Math.random() * 88 + 2) + "%";
+                let move = progress * 70;
                 if (progress > 0.85) {
-                    if (i === winnerID) move += (progress * 18);
-                    else move -= Math.random() * 4;
+                    if (i === winnerID) move += (progress * 20);
+                    else move -= Math.random() * 5;
                 }
-                r.el.style.left = Math.min(move + (Math.random() * 8), 88) + "%";
+                r.el.style.left = Math.min(move + (Math.random() * 10), 88) + "%";
             });
             if (elapsed >= duration) {
                 clearInterval(raceInterval);
                 showWinner(award);
             }
-        }, 120);
+        }, 100);
     }
 
     function showWinner(award) {
@@ -241,6 +249,7 @@
         if (currentAwardIdx < awards.length) {
             racerObjects.forEach(r => r.el.style.left = "5px");
             document.getElementById('startBtn').disabled = false;
+            window.scrollTo(0,0);
         } else {
             showFinale();
         }
@@ -253,7 +262,7 @@
         winnerLog.forEach(w => {
             grid.innerHTML += `<div class="summary-card">
                 <div style="font-size:0.5rem; color:var(--mcd-gold);">${w.title}</div>
-                <img src="${w.photo}" style="width:45px; height:45px; border-radius:50%; border:2px solid gold; margin:4px;">
+                <img src="${w.photo}" style="width:50px; height:50px; border-radius:50%; border:2px solid gold; margin:5px;">
                 <div style="font-size:0.6rem;">${w.winner}</div>
             </div>`;
         });
